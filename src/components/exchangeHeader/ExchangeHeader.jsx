@@ -1,36 +1,35 @@
-import React, { Component } from 'react'
+import React, { Component } from 'react';
 import logo from './logo.svg';
 import styled from 'styled-components';
 
 const Img = styled.img`
-    height: 8rem;
-    pointer-events: none;
+height: 20vmin;
+pointer-events: none;
 `;
-
+ 
 const Header = styled.header`
-    background-color: #282c34;
-    min-height: 20vh;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    color: white;
+background-color: #282c34;
+min-height: 20vh;
+display: flex;
+flex-direction: row;
+align-items: center;
+justify-content: center;
+color: white;
 `;
 
 const H1 = styled.h1`
-    font-size: 4rem;
+font-size: 2rem;
 `;
 
 export default class ExchangeHeader extends Component {
     render() {
         return (
-            <Header className="App-header">
-                <Img src={logo} alt="React logo" />
-                <H1 className="App-title">
+            <Header>
+                <Img src={logo} alt="React logo"/>
+                <H1>
                     Coin Exchange
-                 </H1>
-            </Header>  
-                
+                </H1>
+            </Header>
         )
     }
 }
