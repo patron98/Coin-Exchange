@@ -1,8 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import CoinList from './components/CoinList/CoinList';
 import AccountBalance from './components/AccountBalance/AccountBalance';
 import Exchangeheader from './components/ExchangeHeader/ExchangeHeader';
 import styled from 'styled-components';
+import axios from 'axios';
+
+
+const COIN_COUNT = 10;
+const formatPrice = price => parseFloat(Number(price).toFixed(4));
 
 const Div = styled.div`
   text-align: center;
@@ -13,81 +18,70 @@ const Div = styled.div`
 `;
 
  
-class App extends React.Component {
-  state = {
-    balance: 10000,
-    showBalance: true,
-    coinData: [
-      {
-        name: 'Bitcoin',
-        ticker: 'BTC',
-        balance: 0.17,
-        price: 13999.99
-      },
-      
-      {
-        name: 'Ethereum',
-        ticker: 'ETH',
-        balance: 32.0,
-        price: 399.99
-      },
-      {
-        name: 'Tether',
-        ticker: 'USDT',
-        balance: 0,
-        price: 1.0
-      },
-      {
-        name: 'Chainlink',
-        ticker: 'LINK',
-        balance: 10000,
-        price: 10.62
-      },
-      {
-      name: 'Polkadot',
-      ticker: 'DOT',
-      balance: 7.0,
-      price: 4.0
+function App (props) {
+ 
+  const [balance, setBalance ] = React.useState(10000);
+  const [showBalance, setShowBalance] = React.useState(true);
+  const [coinData, setCoinData] = React.useState([]);
+
+  const componentDidMount = async () => {
+        const response = await axios.get('https://api.coinpaprika.com/v1/coins')
+        const coinIds = response.data.slice(0, COIN_COUNT).map(coin => coin.id);
+        const tickerUrl = 'https://api.coinpaprika.com/v1/tickers/';
+        const promises = coinIds.map(id => axios.get(tickerUrl + id));
+        const coinData = await Promise.all(promises);
+        const coinPriceData = coinData.map(function(response) {
+          const coin = response.data;
+          return {
+            key: coin.id,
+            name: coin.name,
+            ticker: coin.symbol,
+            balance: 0,
+            price: formatPrice(coin.quotes.USD.price)
+          };
+        })
+        setCoinData(coinPriceData);     
       }
-    ]
-  }
-  handleBalanceVisibilityChange = () => {
-    this.setState( function(oldState) {
-      return {
-        ...oldState,
-      showBalance: !oldState.showBalance
-      }
-    });
+
+  useEffect (function(){
+    if (coinData.length === 0){
+      componentDidMount();
+    }
+  });
+
+  const handleBalanceVisibilityChange = () => {
+    setShowBalance(oldValue => !oldValue);
   }
 
 
-  handleRefresh = (valueChangeTicker) => {
-    const newCoinData = this.state.coinData.map( function ( values ) {
+  const handleRefresh = async (valueChangeId) => {
+    const tickerUrl = `https://api.coinpaprika.com/v1/tickers/${valueChangeId}`;
+    const response = await axios.get(tickerUrl);
+    const newPrice = formatPrice(response.data.quotes.USD.price);
+    const newCoinData = coinData.map(function(values){
       let newValues = { ...values };
-      if( valueChangeTicker === values.ticker ) {
-        const randomPercentage = 0.995 + Math.random() * 0.01;        
-      newValues.price *= randomPercentage
+      if( valueChangeId === values.key ) {
+      newValues.price = newPrice;
       }
     return newValues;
   });
-
-  this.setState({ coinData: newCoinData });
+  setCoinData(newCoinData);
 }
-  render() {
+  
     return (
       <Div className="App">
         <Exchangeheader />
         <AccountBalance 
-        amount={this.state.balance}
-        showBalance={this.state.showBalance}
-        handleBalanceVisibilityChange={this.handleBalanceVisibilityChange}/>
+        amount={balance}
+        showBalance={showBalance}
+        handleBalanceVisibilityChange={handleBalanceVisibilityChange}/>
         <CoinList 
-        coinData={this.state.coinData} 
-        showBalance={this.state.showBalance}
-        handleRefresh={this.handleRefresh} />
+        coinData={coinData} 
+        showBalance={showBalance}
+        handleRefresh={handleRefresh} />
       </Div>
     );
-  }
+  
 }
   
  
